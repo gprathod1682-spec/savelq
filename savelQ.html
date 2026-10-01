@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SaveIQ</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F2F5F0;--ink:#16263B;--mute:#5E6B7A;--line:#D5DCD3;--panel:#FFFFFF;--jar:#2E7D5B;--jar-soft:#DCEDE3;--coin:#E2A72E;--bad:#B3402F;--bad-soft:#F6E0DB}
+@media (prefers-color-scheme:dark){:root{--bg:#101A14;--ink:#E6EDE8;--mute:#9AA9A0;--line:#27372E;--panel:#17241C;--jar:#5CC08F;--jar-soft:#1F3A2B;--coin:#E8B84A;--bad:#E58A79;--bad-soft:#3A201B}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,sans-serif;line-height:1.5}
+main{max-width:1000px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:2rem;font-weight:800;margin:0;letter-spacing:-.02em}
+h2{font-size:1.15rem;margin:0 0 14px}
+.sub{color:var(--mute);margin:2px 0 26px}
+.hero{background:var(--ink);color:var(--bg);border-radius:14px;padding:24px;margin-bottom:14px}
+.hero .big{font-size:2.6rem;font-weight:800;letter-spacing:-.03em}
+.hero .lbl{opacity:.75}
+.jar{height:16px;border-radius:8px;background:rgba(255,255,255,.18);overflow:hidden;margin:12px 0 4px}
+.jar>i{display:block;height:100%;background:var(--coin);border-radius:8px;transition:width .6s}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:28px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-size:1.6rem}
+.stat span{color:var(--mute);font-size:.9rem}
+.stat.over b{color:var(--bad)}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
+form,.goal{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+label{display:block;font-size:.88rem;color:var(--mute);margin:10px 0 3px}
+input,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--jar);outline-offset:1px}
+.chk{display:flex;gap:8px;align-items:center;margin-top:12px;color:var(--ink)}
+.chk input{width:auto}
+button{font:inherit;font-weight:600;border:0;border-radius:7px;padding:9px 14px;cursor:pointer;background:var(--jar);color:#fff}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button.del{background:transparent;color:var(--bad);padding:9px 6px}
+button:disabled{opacity:.6;cursor:wait}
+form button{width:100%;margin-top:16px}
+.goal{margin-bottom:12px}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.goal h3{margin:0;font-size:1.1rem}
+.meta{color:var(--mute);font-size:.88rem}
+.tag{font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--jar-soft);color:var(--jar);white-space:nowrap}
+.tag.Overdue{background:var(--bad-soft);color:var(--bad)}
+.bar{height:10px;background:var(--jar-soft);border-radius:6px;overflow:hidden;margin:12px 0 4px}
+.bar>i{display:block;height:100%;background:var(--jar);transition:width .5s}
+.Overdue .bar>i{background:var(--bad)}
+.nums{display:flex;justify-content:space-between;font-size:.9rem}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.acts input{width:110px}
+.ai{margin-top:12px;background:var(--bg);border-left:3px solid var(--coin);border-radius:4px;padding:10px 12px;white-space:pre-wrap;font-size:.92rem}
+.empty{text-align:center;color:var(--mute);padding:40px 10px;border:1px dashed var(--line);border-radius:10px}
+#msg{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;display:none;max-width:90%}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>SaveIQ</h1>
+  <p class="sub">Set a goal, track it, and get a plan to reach it on time.</p>
+
+  <section class="hero" aria-label="Overall progress">
+    <div class="lbl">Saved across all goals</div>
+    <div class="big" id="dSaved">0</div>
+    <div class="jar"><i id="dBar" style="width:0"></i></div>
+    <div class="lbl" id="dSub">No goals yet</div>
+  </section>
+
+  <section class="stats" aria-label="Goal counts">
+    <div class="stat"><b id="sTotal">0</b><span>Total goals</span></div>
+    <div class="stat"><b id="sActive">0</b><span>Active</span></div>
+    <div class="stat"><b id="sDone">0</b><span>Completed</span></div>
+    <div class="stat over"><b id="sOver">0</b><span>Overdue</span></div>
+  </section>
+
+  <div class="layout">
+    <form id="form">
+      <h2>New goal</h2>
+      <label for="name">Goal name</label>
+      <input id="name" required maxlength="60" placeholder="Emergency fund">
+      <label for="target">Target amount</label>
+      <input id="target" type="number" min="1" step="any" required>
+      <label for="saved">Already saved</label>
+      <input id="saved" type="number" min="0" step="any" value="0">
+      <label for="deadline">Deadline</label>
+      <input id="deadline" type="date" required>
+      <label for="purpose">Purpose</label>
+      <textarea id="purpose" rows="2" placeholder="Why this goal matters"></textarea>
+      <label class="chk"><input type="checkbox" id="alerts"> Email me deadline alerts</label>
+      <div id="emailWrap" style="display:none">
+        <label for="email">Email address</label>
+        <input id="email" type="email" placeholder="you@example.com">
+      </div>
+      <button id="save">Create goal</button>
+    </form>
+
+    <section>
+      <h2>Your goals</h2>
+      <div id="list"><div class="empty">Loading your goals…</div></div>
+    </section>
+  </div>
+</main>
+<div id="msg" role="status"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const money = n => Number(n).toLocaleString(undefined, {maximumFractionDigits: 2});
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const advice = {};
+
+function toast(t) {
+  const m = $('msg'); m.textContent = t; m.style.display = 'block';
+  clearTimeout(toast.t); toast.t = setTimeout(() => m.style.display = 'none', 3500);
+}
+const run = (fn, ...args) => new Promise((ok, fail) =>
+  google.script.run.withSuccessHandler(ok).withFailureHandler(e => fail(new Error(e.message || e)))[fn](...args));
+
+$('alerts').onchange = e => $('emailWrap').style.display = e.target.checked ? 'block' : 'none';
+$('deadline').min = new Date().toISOString().slice(0, 10);
+
+async function refresh() {
+  try {
+    const [d, goals] = await Promise.all([run('getDashboard'), run('getGoals')]);
+    $('dSaved').textContent = money(d.totalSaved);
+    $('dBar').style.width = d.overallPercent + '%';
+    $('dSub').textContent = d.totalGoals ? d.overallPercent + '% of ' + money(d.totalTarget) + ' total target' : 'No goals yet';
+    $('sTotal').textContent = d.totalGoals; $('sActive').textContent = d.active;
+    $('sDone').textContent = d.completed; $('sOver').textContent = d.overdue;
+    render(goals);
+  } catch (e) { toast(e.message); $('list').innerHTML = '<div class="empty">Could not load goals. Reload the page to try again.</div>'; }
+}
+
+function render(goals) {
+  if (!goals.length) { $('list').innerHTML = '<div class="empty">No goals yet. Create your first one on the left.</div>'; return; }
+  $('list').innerHTML = goals.map(g => {
+    const due = g.status === 'Completed' ? 'Goal reached' :
+      g.daysLeft < 0 ? Math.abs(g.daysLeft) + ' days overdue' : g.daysLeft + ' days left';
+    return `<article class="goal ${g.status}" data-id="${g.id}">
+      <div class="top"><div><h3>${esc(g.name)}</h3>
+        <div class="meta">${esc(g.purpose)}${g.purpose ? ' · ' : ''}Due ${g.deadline} · ${due}</div></div>
+        <span class="tag ${g.status}">${g.status}</span></div>
+      <div class="bar"><i style="width:${g.percent}%"></i></div>
+      <div class="nums"><span>${money(g.saved)} of ${money(g.target)} (${g.percent}%)</span><span>${money(g.remaining)} to go</span></div>
+      <div class="acts">
+        <input type="number" min="0" step="any" placeholder="Amount" aria-label="Amount to add" id="a-${g.id}">
+        <button data-act="add">Add savings</button>
+        <button class="ghost" data-act="ai">Get AI advice</button>
+        <button class="del" data-act="del">Delete</button>
+      </div>
+      ${advice[g.id] ? `<div class="ai">${esc(advice[g.id])}</div>` : ''}
+    </article>`;
+  }).join('');
+}
+
+$('form').onsubmit = async e => {
+  e.preventDefault();
+  const b = $('save'); b.disabled = true;
+  try {
+    if ($('alerts').checked && !$('email').value) throw new Error('Enter an email address for alerts.');
+    await run('addGoal', {
+      name: $('name').value, target: $('target').value, saved: $('saved').value || 0,
+      deadline: $('deadline').value, purpose: $('purpose').value,
+      email: $('alerts').checked ? $('email').value : ''
+    });
+    $('form').reset(); $('emailWrap').style.display = 'none';
+    toast('Goal created'); await refresh();
+  } catch (err) { toast(err.message); }
+  b.disabled = false;
+};
+
+$('list').onclick = async e => {
+  const btn = e.target.closest('button[data-act]'); if (!btn) return;
+  const id = btn.closest('.goal').dataset.id, act = btn.dataset.act;
+  btn.disabled = true;
+  try {
+    if (act === 'add') { await run('addSavings', id, $('a-' + id).value); toast('Savings added'); await refresh(); }
+    else if (act === 'del') { if (confirm('Delete this goal?')) { await run('deleteGoal', id); delete advice[id]; toast('Goal deleted'); await refresh(); } }
+    else { btn.textContent = 'Thinking…'; advice[id] = await run('getAIAdvice', id); await refresh(); return; }
+  } catch (err) { toast(err.message); }
+  btn.disabled = false;
+  if (act === 'ai') btn.textContent = 'Get AI advice';
+};
+
+refresh();
+</script>
+</body>
+</html>
